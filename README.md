@@ -89,3 +89,78 @@ az group delete -n my-resource-group --yes --no-wait
 ```
 
 This removes the workspace, compute cluster, storage, and all associated resources.
+
+### Hugging Face Inference Endpoints
+
+Deploy `syvai/hviske-v2` as a serverless API on Hugging Face.
+
+Prerequisites: Install the [HF CLI](https://huggingface.co/docs/huggingface_hub/en/guides/cli) and log in.
+
+```bash
+uv tool install 'huggingface-hub[cli]'
+hf login
+```
+
+You also need a payment method on your HF account ([billing settings](https://huggingface.co/settings/billing)) and a token with `inference.endpoints.write` permission ([token settings](https://huggingface.co/settings/tokens)).
+
+#### 1. Deploy the endpoint
+
+```bash
+hf endpoints deploy hviske-v2 \
+  --repo syvai/hviske-v2 \
+  --framework pytorch \
+  --task automatic-speech-recognition \
+  --accelerator gpu \
+  --instance-size x1 \
+  --instance-type nvidia-t4 \
+  --region eu-west-1 \
+  --vendor aws \
+  --min-replica 0 \
+  --max-replica 1 \
+  --scale-to-zero-timeout 15
+```
+
+The endpoint scales to zero after 15 minutes of inactivity, so you only pay while it's in use.
+
+#### 2. Check status
+
+```bash
+hf endpoints describe hviske-v2
+
+# Show only the status and URL
+hf endpoints describe hviske-v2 | jq '{state: .status.state, url: .status.url}'
+```
+
+Wait until the state shows `running` (usually 2-5 minutes on first deploy).
+
+#### 3. Transcribe audio
+
+```bash
+export HF_TOKEN="hf_YOUR_TOKEN_HERE"
+
+curl https://<your-endpoint-url>.endpoints.huggingface.cloud \
+  -X POST \
+  --data-binary @your-audio.wav \
+  -H "Authorization: Bearer $HF_TOKEN" \
+  -H "Content-Type: audio/wav"
+```
+
+The endpoint URL is shown in the output of `hf endpoints describe hviske-v2`.
+
+#### 4. Pause / resume
+
+```bash
+# Pause to stop charges
+hf endpoints pause hviske-v2
+
+# Resume when needed again
+hf endpoints resume hviske-v2
+```
+
+#### Delete endpoint
+
+To permanently delete the endpoint:
+
+```bash
+hf endpoints delete hviske-v2
+```
