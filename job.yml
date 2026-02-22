@@ -1,0 +1,10 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+command: pip install uv && uv sync && uv run python hviske.py ${{inputs.audio_file}}
+inputs:
+  audio_file:
+    type: uri_file
+    path: azureml:my-audio@latest
+environment:
+  image: mcr.microsoft.com/azureml/curated/acft-hf-nlp-gpu:latest
+code: .
+compute: azureml:gpu-cluster

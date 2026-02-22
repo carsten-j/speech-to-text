@@ -10,7 +10,7 @@ Danish speech-to-text transcription using the `syvai/hviske-v2` Whisper model vi
 
 - **Install dependencies:** `uv sync`
 - **Run transcription (chunked, MPS):** `uv run python transcribe.py <path-to-wav>`
-- **Run pipeline-based transcription:** `uv run python hviske.py`
+- **Run pipeline-based transcription:** `uv run python hviske.py <path-to-wav>`
 - **Convert MP3 to WAV:** `uv run python convert_audio.py`
 
 ## Architecture
